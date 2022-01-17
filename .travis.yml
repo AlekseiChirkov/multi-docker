@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t scareface/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true USERNAME/react-test npm test
+
+after_success:
+  - docker build -t scareface/multi-client ./client
+  - docker build -t scareface/multi-nginx ./nginx
+  - docker build -t scareface/multi-server ./server
+  - docker build -t scareface/multi-worker ./worker
+  # Login to Docker Cli
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Push images to Docker Hub
+  - docker push scareface/multi-client
+  - docker push scareface/multi-nginx
+  - docker push scareface/multi-server
+  - docker push scareface/multi-worker
